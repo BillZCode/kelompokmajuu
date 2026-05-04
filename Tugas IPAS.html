@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kuis IPAS Interaktif</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0e0e12;
+      --surface: #16161d;
+      --surface2: #1e1e28;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.18);
+      --text: #f0ede8;
+      --muted: #7a7880;
+      --accent-blue: #4f9cf9;
+      --accent-teal: #36c990;
+      --accent-amber: #f5a623;
+      --accent-coral: #ff6b6b;
+      --correct: #36c990;
+      --wrong: #ff6b6b;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+    }
+
+    /* Subtle background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 680px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── START SCREEN ── */
+    #start-screen {
+      text-align: center;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(79,156,249,0.12);
+      border: 1px solid rgba(79,156,249,0.25);
+      border-radius: 99px;
+      padding: 6px 16px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: var(--accent-blue);
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .start-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #f0ede8 0%, #9b97a6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .start-desc {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 480px;
+      margin: 0 auto 2rem;
+    }
+
+    .topic-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .pill {
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid;
+    }
+
+    .pill-blue  { background: rgba(79,156,249,0.1);  border-color: rgba(79,156,249,0.3);  color: #8bbfff; }
+    .pill-teal  { background: rgba(54,201,144,0.1);  border-color: rgba(54,201,144,0.3);  color: #7de8bf; }
+    .pill-amber { background: rgba(245,166,35,0.1);  border-color: rgba(245,166,35,0.3);  color: #f9c97a; }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 2.5rem;
+    }
+
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.25rem 1rem;
+    }
+
+    .stat-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .stat-lbl {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .btn-start {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent-blue);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 14px 36px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 0 32px rgba(79,156,249,0.3);
+    }
+
+    .btn-start:hover { transform: translateY(-2px); box-shadow: 0 4px 40px rgba(79,156,249,0.45); }
+    .btn-start:active { transform: translateY(0); }
+
+    /* ── QUIZ SCREEN ── */
+    #quiz-screen { display: none; animation: fadeUp 0.5s ease both; }
+
+    .quiz-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .q-counter {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .q-counter span {
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .timer-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      transition: border-color 0.3s, color 0.3s;
+    }
+
+    .timer-badge.warn { border-color: rgba(245,166,35,0.5); color: var(--accent-amber); }
+    .timer-badge.danger { border-color: rgba(255,107,107,0.5); color: var(--accent-coral); }
+
+    .timer-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent-teal);
+      animation: pulse 1.5s infinite;
+    }
+
+    .timer-badge.warn .timer-dot { background: var(--accent-amber); }
+    .timer-badge.danger .timer-dot { background: var(--accent-coral); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Progress */
+    .progress-track {
+      background: var(--surface2);
+      border-radius: 99px;
+      height: 4px;
+      margin-bottom: 0.5rem;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 4px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-teal));
+      transition: width 0.4s cubic-bezier(.4,0,.2,1);
+    }
+
+    .topic-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .tag-blue   { background: rgba(79,156,249,0.12);  color: #8bbfff; }
+    .tag-purple { background: rgba(167,139,250,0.12); color: #c4b0ff; }
+    .tag-green  { background: rgba(54,201,144,0.12);  color: #7de8bf; }
+
+    .question-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2rem;
+      margin-bottom: 1.25rem;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .question-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.55;
+      color: var(--text);
+      margin-bottom: 1.75rem;
+    }
+
+    .option {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    }
+
+    .option:hover:not(.disabled) {
+      border-color: var(--border-hover);
+      background: var(--surface2);
+      transform: translateX(3px);
+    }
+
+    .option.selected { border-color: var(--accent-blue); background: rgba(79,156,249,0.08); }
+    .option.correct  { border-color: var(--correct); background: rgba(54,201,144,0.1); }
+    .option.wrong    { border-color: var(--wrong);   background: rgba(255,107,107,0.08); }
+    .option.disabled { cursor: default; transform: none; }
+
+    .opt-key {
+      width: 28px; height: 28px; min-width: 28px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 500;
+      color: var(--muted);
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .option.selected .opt-key { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+    .option.correct  .opt-key { background: var(--correct);     color: #fff; border-color: var(--correct); }
+    .option.wrong    .opt-key { background: var(--wrong);       color: #fff; border-color: var(--wrong); }
+
+    .opt-text {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.55;
+      padding-top: 5px;
+    }
+
+    .feedback-box {
+      display: none;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.65;
+      margin-top: 1rem;
+    }
+
+    .feedback-box.show { display: block; animation: fadeUp 0.3s ease both; }
+    .feedback-box.ok   { background: rgba(54,201,144,0.1); border: 1px solid rgba(54,201,144,0.2); color: #a7f3d0; }
+    .feedback-box.err  { background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.2); color: #fca5a5; }
+
+    .feedback-box strong { font-weight: 500; display: block; margin-bottom: 4px; }
+
+    /* Nav */
+    .nav-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 0.5rem;
+    }
+
+    .btn-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .btn-nav:hover:not(:disabled) { border-color: var(--border-hover); background: var(--surface2); }
+    .btn-nav:disabled { opacity: 0.35; cursor: default; }
+
+    .btn-nav.primary {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(79,156,249,0.25);
+    }
+
+    .btn-nav.primary:hover:not(:disabled) { background: #3d8ef0; border-color: #3d8ef0; }
+
+    .dot-nav {
+      display: flex; gap: 6px;
+    }
+
+    .dot-nav span {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+
+    .dot-nav span.active { background: var(--accent-blue); border-color: var(--accent-blue); }
+    .dot-nav span.done   { background: var(--accent-teal); border-color: var(--accent-teal); }
+
+    /* ── RESULT SCREEN ── */
+    #result-screen { display: none; animation: fadeUp 0.6s ease both; }
+
+    .result-hero {
+      text-align: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(54,201,144,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .score-ring {
+      width: 110px; height: 110px;
+      border-radius: 50%;
+      border: 3px solid var(--border);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      margin: 0 auto 1.25rem;
+      position: relative;
+    }
+
+    .score-ring svg {
+      position: absolute;
+      inset: -3px;
+      width: calc(100% + 6px);
+      height: calc(100% + 6px);
+      transform: rotate(-90deg);
+    }
+
+    .score-ring circle {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+    }
+
+    .ring-bg { stroke: var(--surface2); }
+    .ring-fill { stroke: var(--accent-teal); transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
+
+    .score-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--text);
+      position: relative;
+    }
+
+    .score-max { font-size: 12px; color: var(--muted); margin-top: 2px; position: relative; }
+
+    .result-grade {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+
+    .result-msg { font-size: 14px; color: var(--muted); line-height: 1.65; max-width: 440px; margin: 0 auto 1.5rem; }
+
+    .result-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .rs { background: var(--surface2); border-radius: 12px; padding: 1rem; text-align: center; }
+    .rs-val { font-family: 'Playfair Display', serif; font-size: 22px; margin-bottom: 4px; }
+    .rs-lbl { font-size: 11px; color: var(--muted); }
+
+    .topic-scores {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .ts { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: center; }
+    .ts-val { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+    .ts-lbl { font-size: 11px; color: var(--muted); }
+
+    .review-section { margin-bottom: 1.5rem; }
+    .review-title { font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 12px; }
+
+    .review-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .ri-icon {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+
+    .ri-ok  { background: rgba(54,201,144,0.15); color: var(--correct); }
+    .ri-err { background: rgba(255,107,107,0.15); color: var(--wrong); }
+
+    .ri-text { flex: 1; color: var(--muted); }
+    .ri-text strong { color: var(--text); }
+
+    .ri-status { font-weight: 500; font-size: 12px; }
+    .ri-status.ok { color: var(--correct); }
+    .ri-status.err { color: var(--wrong); }
+
+    .btn-restart {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .btn-restart:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+    /* ── GAME FEATURES ── */
+    .game-header {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+
+    .game-stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .game-stat-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .game-stat-lbl {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .lives-display {
+      display: flex;
+      gap: 4px;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    .life-heart {
+      width: 12px; height: 12px;
+      border-radius: 2px;
+      background: var(--accent-coral);
+      transition: opacity 0.2s;
+    }
+
+    .life-heart.empty {
+      opacity: 0.2;
+    }
+
+    .combo-meter {
+      background: var(--surface2);
+      height: 3px;
+      border-radius: 2px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+
+    .combo-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-amber), var(--accent-coral));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .powerups-container {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .powerup-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .powerup-btn:hover:not(:disabled) {
+      border-color: var(--accent-blue);
+      background: var(--surface2);
+      transform: scale(1.05);
+    }
+
+    .powerup-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .powerup-count {
+      position: absolute;
+      top: -2px; right: -2px;
+      width: 20px; height: 20px;
+      background: var(--accent-blue);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .feedback-popup {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Playfair Display', serif;
+      font-size: 48px;
+      font-weight: 700;
+      pointer-events: none;
+      z-index: 999;
+      animation: popupFloat 1s ease-out forwards;
+    }
+
+    @keyframes popupFloat {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -120%) scale(1.5); }
+    }
+
+    .feedback-popup.correct { color: var(--correct); }
+    .feedback-popup.wrong { color: var(--wrong); }
+
+    .achievement-badge {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: var(--surface);
+      border: 2px solid var(--accent-blue);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideInRight 0.5s ease, slideOutRight 0.5s ease 3s forwards;
+      z-index: 1000;
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes slideOutRight {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(400px); opacity: 0; }
+    }
+
+    .badge-icon {
+      font-size: 28px;
+    }
+
+    .badge-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .badge-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-blue);
+    }
+
+    .badge-desc {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .high-score-display {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      z-index: 100;
+    }
+
+    .high-score-display strong {
+      color: var(--accent-blue);
+      font-size: 14px;
+      display: block;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    @media (max-width: 520px) {
+      .stats-row, .result-stats, .topic-scores { grid-template-columns: 1fr 1fr; }
+      .question-text { font-size: 16px; }
+      .nav-row { flex-wrap: wrap; }
+      .dot-nav { display: none; }
+      .game-header { grid-template-columns: 1fr 1fr; }
+      .high-score-display { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- START -->
+  <div id="start-screen">
+    <div class="logo-badge">
+      <span style="width:6px;height:6px;border-radius:50%;background:var(--accent-teal);display:inline-block"></span>
+      Kuis Interaktif IPAS
+    </div>
+    <h1 class="start-title">Ilmu Pengetahuan Alam<br>Dan Sosial</h1>
+    <p class="start-desc">Uji pemahamanmu tentang konsep keruangan, interaksi sosial, dan perilaku ekonomi melalui 10 soal pilihan ganda.</p>
+    <div class="topic-pills">
+      <span class="pill pill-blue">Keruangan &amp; Konektivitas</span>
+      <span class="pill pill-teal">Interaksi &amp; Dinamika Sosial</span>
+      <span class="pill pill-amber">Perilaku Ekonomi &amp; Kesejahteraan</span>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-val">10</div>
+        <div class="stat-lbl">Soal</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">30<span style="font-size:16px;font-family:'DM Sans'">s</span></div>
+        <div class="stat-lbl">Per soal</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">3</div>
+        <div class="stat-lbl">Materi</div>
+      </div>
+    </div>
+    <button class="btn-start" onclick="startQuiz()">
+      Mulai Kuis
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz-screen">
+    <div class="high-score-display">
+      <strong id="high-score-val">0</strong>
+      High Score
+    </div>
+
+    <div class="game-header">
+      <div class="game-stat">
+        <div class="game-stat-val" id="game-points">0</div>
+        <div class="game-stat-lbl">POINTS</div>
+      </div>
+      <div class="game-stat">
+        <div class="game-stat-val" id="game-combo">0</div>
+        <div class="game-stat-lbl">COMBO</div>
+        <div class="combo-meter"><div class="combo-fill" id="combo-fill"></div></div>
+      </div>
+      <div class="game-stat">
+        <div class="game-stat-val" id="game-lives">3</div>
+        <div class="game-stat-lbl">LIVES</div>
+        <div class="lives-display" id="lives-display">
+          <div class="life-heart"></div>
+          <div class="life-heart"></div>
+          <div class="life-heart"></div>
+        </div>
+      </div>
+      <div class="game-stat">
+        <div class="game-stat-val" id="q-counter-game">1/10</div>
+        <div class="game-stat-lbl">PROGRESS</div>
+      </div>
+    </div>
+
+    <div class="powerups-container" id="powerups-container">
+      <button class="powerup-btn" id="powerup-fiftyFifty" onclick="usePowerup('fiftyFifty')" title="Hilangkan 2 jawaban salah">
+        50
+        <div class="powerup-count">1</div>
+      </button>
+      <button class="powerup-btn" id="powerup-skip" onclick="usePowerup('skip')" title="Lewati soal ini">
+        ⏭
+        <div class="powerup-count">1</div>
+      </button>
+      <button class="powerup-btn" id="powerup-time" onclick="usePowerup('time')" title="Tambah 15 detik">
+        ⏱
+        <div class="powerup-count">1</div>
+      </button>
+    </div>
+
+    <div class="quiz-header">
+      <div class="q-counter">Soal <span id="q-num">1</span> dari 10</div>
+      <div class="timer-badge" id="timer-badge">
+        <div class="timer-dot"></div>
+        <span id="timer-val">30</span>s
+      </div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill" style="width:10%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+      <div class="dot-nav" id="dot-nav"></div>
+      <div id="topic-tag"></div>
+    </div>
+    <div class="question-card" id="question-card">
+      <div class="question-text" id="q-text"></div>
+      <div id="options-list"></div>
+      <div class="feedback-box" id="feedback-box"></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-nav" id="btn-prev" onclick="navigate(-1)">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M13 8H3M7 4L3 8l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Sebelumnya
+      </button>
+      <button class="btn-nav primary" id="btn-next" onclick="nextOrFinish()">
+        Selanjutnya
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-screen">
+    <div class="result-hero">
+      <div class="score-ring">
+        <svg viewBox="0 0 116 116">
+          <circle class="ring-bg" cx="58" cy="58" r="52" />
+          <circle class="ring-fill" id="ring-fill" cx="58" cy="58" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7" />
+        </svg>
+        <div class="score-num" id="res-score">0</div>
+        <div class="score-max">/ 100</div>
+      </div>
+      <div class="result-grade" id="res-grade"></div>
+      <div class="result-msg" id="res-msg"></div>
+      <div class="result-stats">
+        <div class="rs"><div class="rs-val" id="rs-correct" style="color:var(--correct)">0</div><div class="rs-lbl">Benar</div></div>
+        <div class="rs"><div class="rs-val" id="rs-wrong"   style="color:var(--wrong)">0</div><div class="rs-lbl">Salah</div></div>
+        <div class="rs"><div class="rs-val" id="rs-points">0</div><div class="rs-lbl">POINTS</div></div>
+      </div>
+    </div>
+
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;">
+      <div class="review-title">🏆 ACHIEVEMENTS</div>
+      <div id="achievements-list" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px;"></div>
+    </div>
+
+    <div class="topic-scores">
+      <div class="ts"><div class="ts-val" id="ts-keru" style="color:var(--accent-blue)">-/-</div><div class="ts-lbl">Keruangan</div></div>
+      <div class="ts"><div class="ts-val" id="ts-sos" style="color:#c4b0ff">-/-</div><div class="ts-lbl">Sosial</div></div>
+      <div class="ts"><div class="ts-val" id="ts-eko" style="color:var(--accent-amber)">-/-</div><div class="ts-lbl">Ekonomi</div></div>
+    </div>
+
+    <div class="review-section">
+      <div class="review-title">Rekap Jawaban</div>
+      <div id="review-list"></div>
+    </div>
+
+    <button class="btn-restart" onclick="restart()">🔄 Mainkan Lagi</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  {
+    topic: "keruangan",
+    text: "Konsep yang menjelaskan hubungan suatu wilayah dengan wilayah lain berdasarkan letak geografisnya disebut...",
+    options: ["Konsep aglomerasi","Konsep lokasi relatif","Konsep morfologi","Konsep pola"],
+    answer: 1,
+    explain: "Konsep lokasi relatif menggambarkan posisi suatu tempat dikaitkan dengan wilayah lain di sekitarnya. Contoh: Indonesia terletak di antara dua benua dan dua samudra."
+  },
+  {
+    topic: "keruangan",
+    text: "Interaksi antar ruang terjadi karena adanya syarat saling melengkapi (complementarity). Apa artinya?",
+    options: ["Kedua wilayah memiliki komoditas yang sama","Satu wilayah memiliki kelebihan suatu hal yang dibutuhkan wilayah lain","Biaya transportasi antar wilayah sangat murah","Jarak antar wilayah sangat dekat"],
+    answer: 1,
+    explain: "Complementarity berarti saling melengkapi — satu wilayah memiliki surplus komoditas tertentu dan wilayah lain membutuhkannya, sehingga mendorong interaksi dan perdagangan."
+  },
+  {
+    topic: "keruangan",
+    text: "Perpindahan penduduk dari desa ke kota yang didorong oleh faktor penarik (pull factor) kota adalah contoh dari...",
+    options: ["Transmigrasi","Ruralisasi","Urbanisasi","Migrasi sirkuler"],
+    answer: 2,
+    explain: "Urbanisasi adalah perpindahan penduduk dari pedesaan ke perkotaan. Faktor penariknya meliputi lapangan kerja lebih luas, fasilitas pendidikan, dan taraf hidup yang lebih baik."
+  },
+  {
+    topic: "sosial",
+    text: "Proses sosial di mana dua kebudayaan bertemu dan menghasilkan kebudayaan baru tanpa menghilangkan ciri khas masing-masing disebut...",
+    options: ["Asimilasi","Akulturasi","Integrasi","Difusi"],
+    answer: 1,
+    explain: "Akulturasi adalah perpaduan dua budaya berbeda yang menghasilkan unsur baru, namun masing-masing budaya asal masih dapat dikenali. Contoh: batik bercorak Tiongkok yang tetap disebut batik."
+  },
+  {
+    topic: "sosial",
+    text: "Stratifikasi sosial terbuka adalah sistem pelapisan sosial di mana...",
+    options: ["Status sosial ditentukan sejak lahir dan tidak dapat berubah","Individu dapat berpindah dari satu lapisan ke lapisan lain melalui usaha","Seluruh anggota masyarakat memiliki kedudukan yang sama","Hanya keturunan bangsawan yang dapat naik status"],
+    answer: 1,
+    explain: "Stratifikasi sosial terbuka memberikan peluang bagi individu untuk berpindah lapisan sosial ke atas (social climbing) maupun ke bawah berdasarkan prestasi, pendidikan, atau kekayaan."
+  },
+  {
+    topic: "sosial",
+    text: "Konflik antara dua kelompok etnis berhasil diselesaikan melalui musyawarah dan kesepakatan bersama. Proses ini disebut...",
+    options: ["Kompetisi","Kontravensi","Akomodasi","Koersi"],
+    answer: 2,
+    explain: "Akomodasi adalah upaya meredakan atau menyelesaikan konflik agar tercapai keseimbangan. Bentuknya antara lain mediasi, negosiasi, arbitrase, dan konsiliasi."
+  },
+  {
+    topic: "sosial",
+    text: "Perubahan sosial yang berlangsung cepat dan mendasar serta menyentuh sendi-sendi kehidupan masyarakat disebut...",
+    options: ["Evolusi sosial","Revolusi sosial","Mobilitas horizontal","Difusi budaya"],
+    answer: 1,
+    explain: "Revolusi sosial adalah perubahan yang terjadi secara cepat dan mendalam, biasanya disertai gejolak besar. Revolusi Industri adalah contoh klasik yang mengubah pola kerja dan kehidupan masyarakat secara radikal."
+  },
+  {
+    topic: "ekonomi",
+    text: "Sistem ekonomi di mana pemerintah merencanakan dan mengendalikan seluruh kegiatan ekonomi negara disebut...",
+    options: ["Sistem ekonomi pasar","Sistem ekonomi campuran","Sistem ekonomi komando","Sistem ekonomi tradisional"],
+    answer: 2,
+    explain: "Sistem ekonomi komando (terpusat) menempatkan negara sebagai pengendali penuh kegiatan produksi, distribusi, dan konsumsi. Contoh: Uni Soviet dan Korea Utara."
+  },
+  {
+    topic: "ekonomi",
+    text: "Indikator yang mengukur rata-rata pendapatan penduduk suatu negara per tahun dibagi jumlah penduduknya adalah...",
+    options: ["Produk Domestik Bruto (PDB)","Pendapatan per kapita","Indeks Pembangunan Manusia (IPM)","Nilai tukar mata uang"],
+    answer: 1,
+    explain: "Pendapatan per kapita = PDB ÷ jumlah penduduk. Indikator ini digunakan untuk membandingkan tingkat kemakmuran antarnegara, meski tidak mencerminkan distribusi pendapatan."
+  },
+  {
+    topic: "ekonomi",
+    text: "Kondisi di mana kebutuhan pokok masyarakat tidak terpenuhi sehingga tidak dapat hidup layak disebut...",
+    options: ["Inflasi","Pengangguran struktural","Kemiskinan absolut","Defisit anggaran"],
+    answer: 2,
+    explain: "Kemiskinan absolut terjadi ketika pendapatan seseorang berada di bawah garis kemiskinan sehingga tidak mampu memenuhi kebutuhan dasar seperti pangan, sandang, papan, dan kesehatan."
+  }
+];
+
+const topicLabel = { keruangan: "Keruangan & Konektivitas", sosial: "Interaksi & Dinamika Sosial", ekonomi: "Perilaku Ekonomi" };
+const topicClass = { keruangan: "tag-blue", sosial: "tag-purple", ekonomi: "tag-green" };
+
+// GAME STATE
+let current = 0;
+let answers = new Array(questions.length).fill(null);
+let timer, timeLeft = 30;
+let gamePoints = 0;
+let combo = 0;
+let lives = 3;
+let usedPowerups = { fiftyFifty: 1, skip: 1, time: 1 };
+let hiddenOptions = new Set();
+let achievements = [];
+let timeBonus = {};
+
+// ACHIEVEMENTS
+const achievementsList = [
+  { id: 'perfect', emoji: '🎯', name: 'Sempurna!', desc: 'Jawab semua benar', condition: () => answers.every((a,i) => a === questions[i].answer) },
+  { id: 'speedrun', emoji: '⚡', name: 'Cepat!', desc: 'Rampung < 5 menit', condition: () => false },
+  { id: 'noMiss', emoji: '🔥', name: 'Perfect Combo', desc: 'Combo > 5', condition: () => combo > 5 },
+  { id: 'masterMind', emoji: '🧠', name: 'Master Mind', desc: 'Keruangan 100%', condition: () => {
+    const qs = questions.map((q,i) => ({...q, idx:i})).filter(q => q.topic === 'keruangan');
+    return qs.length > 0 && qs.every(q => answers[q.idx] === q.answer);
+  }},
+  { id: 'socialite', emoji: '👥', name: 'Socialite', desc: 'Sosial 100%', condition: () => {
+    const qs = questions.map((q,i) => ({...q, idx:i})).filter(q => q.topic === 'sosial');
+    return qs.length > 0 && qs.every(q => answers[q.idx] === q.answer);
+  }},
+  { id: 'economist', emoji: '💰', name: 'Economist', desc: 'Ekonomi 100%', condition: () => {
+    const qs = questions.map((q,i) => ({...q, idx:i})).filter(q => q.topic === 'ekonomi');
+    return qs.length > 0 && qs.every(q => answers[q.idx] === q.answer);
+  }}
+];
+
+function playSound(type) {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  
+  if (type === 'correct') {
+    oscillator.frequency.value = 800;
+    gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.15);
+  } else if (type === 'wrong') {
+    oscillator.frequency.value = 300;
+    gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.2);
+  }
+}
+
+function showPopup(text, type) {
+  const popup = document.createElement('div');
+  popup.className = `feedback-popup ${type}`;
+  popup.textContent = text;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 1000);
+}
+
+function showAchievement(achievement) {
+  const badge = document.createElement('div');
+  badge.className = 'achievement-badge';
+  badge.innerHTML = `
+    <div class="badge-icon">${achievement.emoji}</div>
+    <div class="badge-content">
+      <div class="badge-title">${achievement.name}</div>
+      <div class="badge-desc">${achievement.desc}</div>
+    </div>
+  `;
+  document.body.appendChild(badge);
+  setTimeout(() => badge.remove(), 4000);
+}
+
+function startQuiz() {
+  gamePoints = 0;
+  combo = 0;
+  lives = 3;
+  usedPowerups = { fiftyFifty: 1, skip: 1, time: 1 };
+  hiddenOptions = new Set();
+  achievements = [];
+  timeBonus = {};
+  
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  updateHighScore();
+  buildDots();
+  renderQuestion();
+  startTimer();
+}
+
+function updateHighScore() {
+  const highScore = localStorage.getItem('highScore') || 0;
+  document.getElementById('high-score-val').textContent = highScore;
+}
+
+function buildDots() {
+  const nav = document.getElementById('dot-nav');
+  nav.innerHTML = questions.map((_, i) => `<span id="dot-${i}"></span>`).join('');
+}
+
+function updateDots() {
+  questions.forEach((_, i) => {
+    const d = document.getElementById('dot-' + i);
+    d.className = '';
+    if (i === current) d.classList.add('active');
+    else if (answers[i] !== null) d.classList.add('done');
+  });
+}
+
+function startTimer() {
+  clearInterval(timer);
+  timeLeft = 30;
+  timeBonus[current] = 30;
+  renderTimer();
+  timer = setInterval(() => {
+    timeLeft--;
+    timeBonus[current]--;
+    renderTimer();
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      if (answers[current] === null) {
+        answers[current] = -1;
+        lives--;
+        renderQuestion();
+      }
+    }
+  }, 1000);
+}
+
+function renderTimer() {
+  const el = document.getElementById('timer-val');
+  const badge = document.getElementById('timer-badge');
+  el.textContent = timeLeft;
+  badge.className = 'timer-badge' + (timeLeft <= 10 ? (timeLeft <= 5 ? ' danger' : ' warn') : '');
+}
+
+function renderQuestion() {
+  const q = questions[current];
+  const sel = answers[current];
+  const answered = sel !== null;
+
+  document.getElementById('q-num').textContent = current + 1;
+  document.getElementById('q-counter-game').textContent = `${current + 1}/10`;
+  document.getElementById('progress-fill').style.width = ((current + 1) / questions.length * 100) + '%';
+  document.getElementById('topic-tag').innerHTML = `<span class="topic-tag ${topicClass[q.topic]}">${topicLabel[q.topic]}</span>`;
+  document.getElementById('q-text').textContent = `${current + 1}. ${q.text}`;
+  updateDots();
+  updateGameStats();
+  updatePowerups();
+
+  const letters = ['A','B','C','D'];
+  document.getElementById('options-list').innerHTML = q.options.map((o, i) => {
+    if (hiddenOptions.has(i)) return '';
+    let cls = 'option';
+    if (answered) {
+      cls += ' disabled';
+      if (i === q.answer) cls += ' correct';
+      else if (i === sel) cls += ' wrong';
+    } else if (i === sel) cls += ' selected';
+    return `<div class="${cls}" onclick="choose(${i})">
+      <div class="opt-key">${letters[i]}</div>
+      <div class="opt-text">${o}</div>
+    </div>`;
+  }).join('');
+
+  const fb = document.getElementById('feedback-box');
+  if (answered) {
+    const ok = sel === q.answer;
+    fb.className = 'feedback-box show ' + (ok ? 'ok' : 'err');
+    fb.innerHTML = `<strong>${ok ? '✓ Benar!' : '✗ Kurang tepat.'}</strong>${q.explain}`;
+  } else {
+    fb.className = 'feedback-box';
+    fb.innerHTML = '';
+  }
+
+  const isLast = current === questions.length - 1;
+  const btnNext = document.getElementById('btn-next');
+  btnNext.disabled = !answered && !isLast;
+  if (answered && isLast) {
+    btnNext.innerHTML = 'Lihat Hasil 🏁 <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  } else {
+    btnNext.innerHTML = 'Selanjutnya <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+  if (answered && !isLast) btnNext.disabled = false;
+
+  document.getElementById('btn-prev').disabled = current === 0;
+
+  if (lives <= 0) {
+    document.getElementById('btn-next').disabled = true;
+    showPopup('❌ GAME OVER!', 'wrong');
+    setTimeout(() => showResult(), 1500);
+  }
+}
+
+function updateGameStats() {
+  document.getElementById('game-points').textContent = gamePoints;
+  document.getElementById('game-combo').textContent = combo;
+  document.getElementById('combo-fill').style.width = (Math.min(combo, 10) * 10) + '%';
+  document.getElementById('game-lives').textContent = lives;
+  
+  const livesDisplay = document.getElementById('lives-display');
+  livesDisplay.innerHTML = Array.from({ length: 3 }, (_, i) => 
+    `<div class="life-heart${i >= lives ? ' empty' : ''}"></div>`
+  ).join('');
+}
+
+function updatePowerups() {
+  ['fiftyFifty', 'skip', 'time'].forEach(p => {
+    const btn = document.getElementById(`powerup-${p}`);
+    btn.disabled = usedPowerups[p] <= 0;
+    btn.querySelector('.powerup-count').textContent = Math.max(0, usedPowerups[p]);
+  });
+}
+
+function usePowerup(type) {
+  if (usedPowerups[type] <= 0 || answers[current] !== null) return;
+  
+  const q = questions[current];
+  
+  if (type === 'fiftyFifty') {
+    let options = [0, 1, 2, 3].filter(i => i !== q.answer);
+    const toHide = options.slice(0, 2);
+    toHide.forEach(i => hiddenOptions.add(i));
+    usedPowerups[type]--;
+    renderQuestion();
+    showPopup('50-50! 🎯', 'correct');
+  } else if (type === 'skip') {
+    usedPowerups[type]--;
+    answers[current] = -1;
+    showPopup('Lewat soal! ⏭', 'correct');
+    setTimeout(() => navigate(1), 300);
+  } else if (type === 'time') {
+    usedPowerups[type]--;
+    timeLeft += 15;
+    renderTimer();
+    showPopup('+15 detik! ⏱', 'correct');
+  }
+}
+
+function choose(i) {
+  if (answers[current] !== null) return;
+  clearInterval(timer);
+  answers[current] = i;
+  hiddenOptions.clear();
+  
+  const q = questions[current];
+  const ok = i === q.answer;
+  
+  if (ok) {
+    combo++;
+    playSound('correct');
+    showPopup('+100 Points! ✓', 'correct');
+    const speedBonus = Math.max(0, (timeLeft - 5) * 5);
+    const comboBonus = combo * 10;
+    const points = 100 + speedBonus + comboBonus;
+    gamePoints += points;
+  } else {
+    combo = 0;
+    lives--;
+    playSound('wrong');
+    showPopup('Salah! ✗', 'wrong');
+  }
+  
+  renderQuestion();
+}
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next < 0 || next >= questions.length) return;
+  current = next;
+  hiddenOptions.clear();
+  renderQuestion();
+  if (answers[current] === null) startTimer();
+  else clearInterval(timer);
+}
+
+function nextOrFinish() {
+  if (current === questions.length - 1) {
+    showResult();
+  } else {
+    navigate(1);
+  }
+}
+
+function showResult() {
+  clearInterval(timer);
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+
+  const correct = answers.filter((a, i) => a === questions[i].answer).length;
+  const score = Math.round(correct / questions.length * 100);
+
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('rs-correct').textContent = correct;
+  document.getElementById('rs-wrong').textContent = questions.length - correct;
+  document.getElementById('rs-points').textContent = gamePoints;
+
+  let grade, msg, ringColor;
+  if (score >= 80) {
+    grade = '🏆 Sangat Baik!'; ringColor = 'var(--correct)';
+    msg = 'Luar biasa! Kamu adalah champion! 👑 Penguasaanmu terhadap materi IPAS sangat mengesankan.';
+  } else if (score >= 60) {
+    grade = '👍 Cukup Baik'; ringColor = 'var(--accent-blue)';
+    msg = 'Bagus! Kamu sudah paham sebagian besar materi. Pelajari lagi yang masih kurang.';
+  } else {
+    grade = '📚 Tingkatkan Lagi'; ringColor = 'var(--accent-amber)';
+    msg = 'Jangan menyerah! Materi memang butuh waktu untuk dipahami. Coba lagi nanti!';
+  }
+
+  document.getElementById('res-grade').textContent = grade;
+  document.getElementById('res-msg').textContent = msg;
+  document.getElementById('ring-fill').style.stroke = ringColor;
+
+  const circumference = 326.7;
+  setTimeout(() => {
+    document.getElementById('ring-fill').style.strokeDashoffset = circumference - (circumference * score / 100);
+  }, 100);
+
+  // Calculate achievements
+  achievements = achievementsList.filter(a => a.condition());
+  
+  const achievementsHTML = achievementsList.map(a => {
+    const unlocked = achievements.some(x => x.id === a.id);
+    return `<div style="text-align: center; opacity: ${unlocked ? 1 : 0.3};">
+      <div style="font-size: 32px; margin-bottom: 4px;">${a.emoji}</div>
+      <div style="font-size: 11px; color: var(--muted);">${a.name}</div>
+    </div>`;
+  }).join('');
+  
+  document.getElementById('achievements-list').innerHTML = achievementsHTML;
+
+  const topicData = {
+    keruangan: { id: 'ts-keru' },
+    sosial: { id: 'ts-sos' },
+    ekonomi: { id: 'ts-eko' }
+  };
+
+  Object.keys(topicData).forEach(t => {
+    const qs = questions.map((q,i) => ({...q, idx:i})).filter(q => q.topic === t);
+    const c = qs.filter(q => answers[q.idx] === q.answer).length;
+    document.getElementById(topicData[t].id).textContent = `${c}/${qs.length}`;
+  });
+
+  const reviewHTML = questions.map((q, i) => {
+    const ok = answers[i] === q.answer;
+    return `<div class="review-item">
+      <div class="ri-icon ${ok ? 'ri-ok' : 'ri-err'}">${ok ? '✓' : '✗'}</div>
+      <div class="ri-text"><strong>Soal ${i+1}</strong> — ${topicLabel[q.topic]}</div>
+      <div class="ri-status ${ok ? 'ok' : 'err'}">${ok ? 'Benar' : 'Salah'}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('review-list').innerHTML = reviewHTML;
+
+  // Update high score
+  const currentHigh = parseInt(localStorage.getItem('highScore') || 0);
+  if (gamePoints > currentHigh) {
+    localStorage.setItem('highScore', gamePoints);
+    showAchievement({ emoji: '⭐', name: 'High Score!', desc: `${gamePoints} Points` });
+  }
+}
+
+function restart() {
+  current = 0;
+  answers = new Array(questions.length).fill(null);
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  document.getElementById('ring-fill').style.strokeDashoffset = '326.7';
+  buildDots();
+  startQuiz();
+}
+</script>
+</body>
+</html>
